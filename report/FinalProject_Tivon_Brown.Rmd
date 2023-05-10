@@ -1,0 +1,326 @@
+---
+title: "STAT540 - Final Project"
+author: "Tivon Brown"
+date: '`r Sys.Date()`'
+output: html_notebook
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r packages, echo = TRUE, message = FALSE}
+# load the packages for graphing and data wrangling
+# install.packages("tidyverse")  # uncomment to install package as necessary
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+```
+
+
+**Note:** If you `Rmd` file submission knits you will receive total of **(10 points)**. 
+
+For the data wrangling use function from the `dplyr` and `tidyr` packages.
+
+
+# Project Objectives?
+
+
+Demonstrate Data Wrangling proficiency through the following manipulations: 
+
+1. Select columns in a data frame with the dplyr function `select`.
+
+2. Select rows in a data frame according to filtering conditions with the dplyr function `filter`.
+
+3. Direct the output of one dplyr function to the input of another function with the ‘pipe’ operator `%>%`.
+    
+4. Add new columns to a data frame that are functions of existing columns with `mutate`.
+
+5. Apply `summarize`, `group_by`, and `count` to split a data frame into groups of observations
+
+6. Apply a summary statistics for each group, and then combine the results.
+    
+7. Join two tables by a common variable.
+ 
+8. Apply the concept of a wide and a long table format and for which purpose those formats are useful.
+
+
+## Download the Data
+
+Create sub-folder `data` in your working directory. Run the code to download the two (2) files from "MS_trafficstops_bw_age" and "MS_acs_2015_bw". The data contains information about traffic stops for blacks and whites in the state of Mississippi during January 2013 to mid-July of 2016.
+              
+```{r download the data, warning=FALSE, message=FALSE}
+library(tidyverse)
+
+
+download.file("http://bit.ly/MS_trafficstops_bw_age",
+              "../data/original/MS_trafficstops_bw_age.csv")
+
+download.file("http://bit.ly/MS_acs_2015_bw",
+              "../data/original/MS_acs2015_bw.csv")
+```
+
+
+
+## Part  1 (5 pts)
+
+Read the `MS_trafficstops_bw_age.csv` into a data frame to load the sample data into an object of class `tbl_df` (`tibble`) named `trf_stops`. Use the `read_csv` function.
+
+
+**Solution**:
+```{r}
+# complete the code
+
+trf_stops <- read_csv("../data/original/MS_trafficstops_bw_age.csv")
+```
+
+## Part  2 (5 pts)
+
+Briefly describe the data by reviewing the output of the `str()` and `spec()` function. How many records on how many variables are in it?
+
+**Solution**:
+```{r}
+str(trf_stops)
+spec(trf_stops)
+```
+**Answer**: 11 variables, those being `id`, `county_name`, `police_department`, `driver_gender`, `driver_race`, `officer_id`,and `violation` that returns a character/string. `county_fips` and `driver_age` returning number that are formatted as doubles. And lastly `stop_date` and `driver_birthdate` returns dates. 
+
+## Part  3 (5 pts)
+
+Write code to select the columns: `police_department, officer_id, driver_race` of a data frame with the `select()` function from `dplyr` package. 
+
+Hint: Use `select()` preceded with `dplyr::select()` in order to indicate that the select function from the dplyr package is to be used. `select()` exists in other packages too.
+
+**Solution**:
+
+```{r}
+trf_stops %>% dplyr::select('police_department', 'officer_id', 'driver_race')
+```
+
+
+## Part  4 (5 pts) 
+The `dplyr` package is supported by a package with a number of helper functions, which provide convenient functions to select columns based on their names. 
+
+Explain what the code `trf_stops %>% dplyr::select(starts_with("driver")` achieves. 
+
+Write code to get all variables in the data which names ends with "er".
+
+
+**Solution**:
+
+```{r}
+trf_stops %>% dplyr::select(starts_with("driver"))
+
+trf_stops %>% dplyr::select(ends_with("er"))
+```
+**Answer**: `trf_stops %>% dplyr::select(starts_with("driver"))` achieves any columns that start with the word "driver". The column selected are `driver_gender`, `driver_birthdate`, `driver_race`, and `driver_age`.
+
+## Part  5 (5 pts)
+
+Use the `slice_min()` to find the youngest driver(`driver age` variable) stopped in the data? What is the oldest driver(s) age?
+
+**Solution**:
+```{r}
+trf_stops %>% slice_min(driver_age)
+
+trf_stops %>% slice_max(driver_age)
+```
+**Answer**: Using `slice_min()` the youngest driver(`driver_age` variable) is 7. Using `slice_max()` the oldest driver(`driver_age` variable) is 86
+
+## Part  6 (5 pts)
+
+Write code, using functions from dplyr package, to arrange the data `trf_stops` by `county_name` and `stop_date`. What is the `id` variable value for the first record?
+
+**Solution**:
+
+```{r}
+trf_stops %>% dplyr::arrange(county_name, stop_date)
+```
+**Answer**: The first `id` variable value is MS-2013-07659
+ 
+
+## Part  7 (5 pts)
+The code below uses pipes operator `%>%` to filter rows of the data where driver's age is `> 85` years and then select only the values for the `violation, driver_gender`. 
+
+
+```{r}
+trf_stops %>%
+  dplyr::filter(driver_age > 85) %>%
+  dplyr::select(violation, driver_gender)
+```
+
+
+Write code that first filter() the data to keep rows where driver_race is `Black`, then through `select()` to keep only the `officer_id` and `stop_date` columns. 
+
+How many stops were made by officer with id `D003`?
+
+**Solution**:
+
+
+```{r}
+trf_stops %>%
+  dplyr::filter(driver_race  == "Black") %>%
+  dplyr::select(officer_id, stop_date)
+
+#Filtering for officer id D003
+trf_stops %>%
+  dplyr::filter(officer_id == "D003") %>%
+  dplyr::select(officer_id , stop_date)
+
+#Filtering for Black and officer id D003
+trf_stops %>%
+  dplyr::filter(driver_race  == "Black", officer_id == "D003") %>%
+  dplyr::select(officer_id , stop_date)
+
+#Filtering for white and officer id D003
+trf_stops %>%
+  dplyr::filter(driver_race  == "White", officer_id == "D003") %>%
+  dplyr::select(officer_id , stop_date)
+```
+**Answer**: `officer_id` D003 has made 259 stops, 198 were black and 61 were white.
+
+## Part  8 (5 pts)
+
+Using pipes, subset the `trf_stops` data to include stops in `Tunica` county only and retain the columns `stop_date, driver_age, and violation`. How many records are in the subset for Tunica county?
+
+**Solution**:
+```{r}
+trf_stops %>%
+  dplyr::filter(county_name  == "Tunica") %>%
+  dplyr::select(stop_date, driver_age, violation)
+```
+**Answer**: 4 records were found
+
+## Part  9 (10 pts)
+Using the `trf_stops` data select all rows where the `driver_race` is not missing, in other words is different than "NA".
+
+Then group the data by `county_name`, `driver_race` and produce the mean driver_age for the grouped data.
+
+What is the **average** age of white drivers in Amite	county?
+
+What is the **minimum** age of white drivers in Amite	county?
+
+**Solution**:
+
+```{r}
+#average age
+trf_stops %>%
+  dplyr::filter(driver_race  !=  "NA") %>%
+  dplyr::group_by(county_name, driver_race) %>%
+  dplyr::summarise(mean_driver_age = mean(driver_age, na.rm = TRUE))
+
+#minimum age
+trf_stops %>%
+  dplyr::filter(driver_race  !=  "NA") %>%
+  dplyr::group_by(county_name, driver_race) %>%
+  dplyr::summarise(mean_driver_age = min(driver_age, na.rm = TRUE))
+```
+**Answer**: The average age of white drivers in Amite	county is 42.10075, or 42 if rounded. The minimum age of white drivers in Amite	county is 15.
+
+## Part  10 (10 pts)
+Using the `count()` function and `trf_stops` data, one can count the number of stops made by each `officer_id`.
+
+
+```{r}
+trf_stops %>%
+  count(officer_id, name = "n_stops") # the result will be stored under variable n_stops
+```
+
+Use the argument `sort = TRUE` in the parameters of `count()` to sort the data in descending order. 
+ 
+ What is the officer_id with maximum stops? 
+ 
+ 
+ 
+**Solution**:
+```{r}
+trf_stops %>%
+  count(officer_id, name = "n_stops", sort = TRUE)
+```
+**Answer**: C055 has the maximum stops
+ 
+## Part  11 (10 pts)
+
+Explain what the given code below is producing.
+ 
+```{r}
+trf_stops %>%
+  count(officer_id, violation, name = "n_stops", sort = TRUE)
+```
+**Answer**: The code is using the `count()` function on the `trf_stops` data to count the number of stops, n_stops, and the main `violation` recorded from each `officer_id` and sorting them from highest stops to lowest.  
+
+## Part  12 (10 pts)
+
+The `MS_acs2015_bw.csv`, containing the numbers of the black and white total population for same counties that were in the `trf_stops` data.
+
+Read the `MS_acs2015_bw.csv`into a data frame to load the sample data into an object of class `tbl_df` (`tibble`) named `tot_pop`. Use the `read_csv` function.
+
+```{r}
+#complete the code
+
+tot_pop <- read_csv("../data/original/MS_acs2015_bw.csv")
+```
+
+
+## Part  13 (10 pts)
+
+Briefly describe the data by reviewing the output of the `str()` and `spec()` function. How many records on how many variables are in it?
+
+**Solution**:
+
+```{r}
+str(tot_pop)
+spec(tot_pop)
+```
+**Answer**: 5 variables are listed, those being `County`, which returns a character/string, `FIPS`, `black_pop`, `white_pop`, and `bw_pop` which all return number that are formatted as doubles.
+
+
+## Part  14 (10 pts)
+
+Using `left_join()` function, to join the two tibbles: `trf_stops` and `tot_pop` by the common county name, to produce one tibble with the following variables: `n_stops, FIPS, black_pop, white_pop, bw_pop`.
+
+`left_join()` returns all rows from the left table, and all columns from the left and the right table. As ID, which uniquely identifies the corresponding records in each table we use the `countuy_name` (from `trf_stops`) and `County` (from `tot_pop`) names.
+
+Using the code below one can count all the stops per county. Review the displayed table below.
+
+```{r}
+trf_stops %>% 
+  count(county_name, name = "n_stops") 
+```
+
+**Solution:**
+
+```{r}
+trf_stops %>% left_join(tot_pop, by=c('county_name' = 'County')) %>%
+  count(county_name, name = "n_stops", FIPS, black_pop, white_pop, bw_pop)
+```
+
+## Part  15 Extra Credit (10 pts)
+
+The code below creates a data frame with the counts of different violations for each county:
+
+```{r}
+violations <- trf_stops %>%
+  count(county_name, violation)
+
+violations
+```
+The violation data is in long data format.
+
+Covert this data in wide format. Use `pivot_wider()` from `tidyr` to turn the driver type violation into columns (variables).
+
+Note: One needs to provide two arguments to `pivot_wider` in addition to the data: names_from describes which column to use for name of the output column, and values_from tells it from column to get the cell values. 
+
+pivot_wider(
+  data,
+  id_cols = NULL,
+  names_from = name,
+  ...
+)
+
+```{r}
+violations %>% pivot_wider(names_from = violation, values_from = n)
+```
